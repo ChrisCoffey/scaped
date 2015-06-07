@@ -1,0 +1,36 @@
+*.class
+*.csv
+*.dat
+*.db
+*.exe
+*.log
+*.orig
+*.tar.gz
+*.zip
+.DS_Store
+
+# sbt specific
+dist/
+lib_managed/
+project/boot/
+project/plugins/project/
+src_managed/
+target/
+
+# Scala-IDE specific
+/bin
+/.cache
+.scala_dependencies
+/.target
+
+# vim specific
+.*.sw?
+.swp
+
+# nohup
+nohup.out
+
+.history
+/.idea
+/.idea_modules
+
