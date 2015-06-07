@@ -137,16 +137,16 @@ object SHPFormat {
 
         def point(b: BinaryFile): R[Point] =
             for{
-                (_, a) <- field(4)(b)
-                (x, c) <- field(8)(a)
+                //(_, a) <- field(4)(b)
+                (x, c) <- field(8)(b)
                 (y, d) <- field(8)(c)
             } yield (Point(x.reverse, y.reverse), d)
 
 
-        private def mbr(b: BinaryFile) =
+        private def mbr(a: BinaryFile) =
             for{
-                (mnX, a) <- field(8)(b)
-                (mnY, c) <- field(8)(a)
+                (mnX, b) <- field(8)(a)
+                (mnY, c) <- field(8)(b)
                 (mxX, d) <- field(8)(c)
                 (mxY, e) <- field(8)(d)
             } yield (
@@ -155,16 +155,17 @@ object SHPFormat {
 
         private def part(b: BinaryFile): R[Part]  =
             field(4)(b).map(x =>{
-                (Part(x._1.reverse), x._2)
+                (Part(x._1.reverse), b)
             } )
 
 
         private def shapeSeq[T <: Shape](n: Int,
                                          f: BinaryFile => Option[(T, BinaryFile)])
                                         (a: BinaryFile): Option[(Seq[T], BinaryFile)] = {
+
             def go(i: Int, bf: BinaryFile, ls: Seq[T]): Option[(Seq[T], BinaryFile)] = {
                 i match {
-                    case 0 => f(bf).map(x => (ls :+ x._1, x._2))
+                    case 0 => Some((ls, bf))
                     case _ => {
                         f(bf) match {
                             case Some(x) =>  go(i -1, x._2, ls :+ x._1)
@@ -175,20 +176,10 @@ object SHPFormat {
             }
 
             go(n, a, Seq[T]())
-
-//            var tb = a
-//            val x = (0 until n).map( i =>{
-//                f(tb).map{ r => {
-//                   tb = r._2
-//                   r._1
-//                }}
-//            })
-//            sequenceOpt(x).map(ls => (ls, tb))
         }
 
-        def multiPoint(a: BinaryFile): R[MultiPoint] = {
+        def multiPoint(b: BinaryFile): R[MultiPoint] = {
             for{
-                (_, b) <- field(4)(a)
                 (mr, c) <- mbr(b)
                 (rnumPts, d) <- field(4)(c)
                 numPts = rnumPts.reverse
@@ -212,9 +203,8 @@ object SHPFormat {
                 PolyLine(box, nParts, nPoints, prts, pts),
                 g)
 
-        def polyGon(a: BinaryFile): R[Polygon] =
+        def polyGon(b: BinaryFile): R[Polygon] =
             for{
-                (_, b) <- field(4)(a)
                 (box, c) <- mbr(b)
                 (rnumParts, d) <- field(4)(c)
                 nParts = rnumParts.reverse
@@ -222,7 +212,7 @@ object SHPFormat {
                 nPoints = rnPoints.reverse
                 (prts, f) <- shapeSeq(nParts, part)(e)
                 (pts, g) <- shapeSeq(nPoints, point)(f)
-            } yield ( Polygon(box, nParts, nPoints, prts, pts), g )
+            } yield ( Polygon(box, nParts, nPoints, prts, pts), b )
 
     }
 
